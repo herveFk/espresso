@@ -1,0 +1,143 @@
+---
+# Source: espresso-shop-web/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: RELEASE-NAME-espresso-shop-web
+  labels:
+    app: espresso-shop-web
+    helm.sh/chart: espresso-shop-web-0.1.0
+    app: frontend
+    app.kubernetes.io/name: espresso-shop-web
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+---
+# Source: espresso-shop-web/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: RELEASE-NAME-espresso-shop-web
+  labels:
+    app: espresso-shop-web
+    helm.sh/chart: espresso-shop-web-0.1.0
+    app: frontend
+    app.kubernetes.io/name: espresso-shop-web
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: NodePort
+  ports:
+    - port: 8090
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: frontend
+    app.kubernetes.io/name: espresso-shop-web
+    app.kubernetes.io/instance: RELEASE-NAME
+---
+# Source: espresso-shop-web/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: RELEASE-NAME-espresso-shop-web
+  labels:
+    app: espresso-shop-web
+    helm.sh/chart: espresso-shop-web-0.1.0
+    app: frontend
+    app.kubernetes.io/name: espresso-shop-web
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  selector:
+    matchLabels:
+      app: frontend
+      app.kubernetes.io/name: espresso-shop-web
+      app.kubernetes.io/instance: RELEASE-NAME
+  template:
+    metadata:
+      labels:
+        app: frontend
+        app.kubernetes.io/name: espresso-shop-web
+        app.kubernetes.io/instance: RELEASE-NAME
+    spec:
+      serviceAccountName: RELEASE-NAME-espresso-shop-web
+      securityContext:
+        {}
+      containers:
+        - name: espresso-shop-web
+          securityContext:
+            {}
+          image: "devopseasylearning/espresso-shop-web:v1.0.0:latest"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+# Source: espresso-shop-web/templates/hpa.yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: RELEASE-NAME-espresso-shop-web
+  labels:
+    app: espresso-shop-web
+    helm.sh/chart: espresso-shop-web-0.1.0
+    app: frontend
+    app.kubernetes.io/name: espresso-shop-web
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: RELEASE-NAME-espresso-shop-web
+  minReplicas: 1
+  maxReplicas: 100
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: 80
+---
+# Source: espresso-shop-web/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "RELEASE-NAME-espresso-shop-web-test-connection"
+  labels:
+    app: espresso-shop-web
+    helm.sh/chart: espresso-shop-web-0.1.0
+    app: frontend
+    app.kubernetes.io/name: espresso-shop-web
+    app.kubernetes.io/instance: RELEASE-NAME
+    app.kubernetes.io/version: "1.16.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['RELEASE-NAME-espresso-shop-web:8090']
+  restartPolicy: Never
