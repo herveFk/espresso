@@ -1,0 +1,3 @@
+[submodule "helm-charts-prometheus"]
+	path = helm-charts-prometheus
+	url = git@github.com:herveFk/helm-charts-prometheus.git
